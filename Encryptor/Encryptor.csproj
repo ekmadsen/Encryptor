@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>ErikTheCoder.Encryptor</RootNamespace>
+    <AssemblyName>ErikTheCoder.Encryptor</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ErikTheCoder.Logging" Version="1.0.5" />
+    <PackageReference Include="ErikTheCoder.ServiceContract" Version="1.0.8" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
+  </ItemGroup>
+
+</Project>

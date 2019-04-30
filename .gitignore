@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs
+/Encryptor/obj
+/Encryptor/bin/Debug/netcoreapp2.2
+/Encryptor/.vs/Encryptor
