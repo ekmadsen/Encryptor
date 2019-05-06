@@ -10,7 +10,9 @@
 
   <ItemGroup>
     <PackageReference Include="ErikTheCoder.Logging" Version="1.0.5" />
-    <PackageReference Include="ErikTheCoder.ServiceContract" Version="1.0.8" />
+    <PackageReference Include="ErikTheCoder.ServiceContract" Version="1.0.10" />
+    <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
   </ItemGroup>
 
