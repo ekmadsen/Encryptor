@@ -16,6 +16,10 @@ namespace ErikTheCoder.Encryptor
                     return new AesManaged();
                 case "aescng":
                     return new AesCng();
+                case "tdescsp":
+                    return new TripleDESCryptoServiceProvider();
+                case "tdescng":
+                    return new TripleDESCng();
                 default:
                     throw new ArgumentException($"{Name} cipher not supported.");
             }
