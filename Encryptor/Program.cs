@@ -153,9 +153,9 @@ namespace ErikTheCoder.Encryptor
             SafeConsole.WriteLine($"Wrote decrypted file to {outputFilename}.");
             SafeConsole.WriteLine($"Decryption took {encryptionDuration.TotalSeconds.ToString(_elapsedSecondsFormat)} seconds.");
         }
-        
 
-        // Encryption arguments = -i "C:\Users\emadsen\OneDrive - Global Imaging Systems, Inc\Documents\Temp\Test.pdf" -o encrypt -c aescng -kd rfc2898 -kl 32 -kdi 10000 -sl 16
+
+        // Encryption arguments = -i "C:\Users\Erik\Temp\Test.pdf" -o encrypt -c aescng -kd rfc2898 -kdi 1000 -kl 32 -sl 16
         private static EncryptedFileHeader ParseCommandLine(IReadOnlyList<string> Arguments)
         {
             if (Arguments.Count % 2 != 0) throw new ArgumentException("Invalid number of arguments.  Arguments must be passed in a pair: -argumentName argumentValue or /argumentName argumentValue.");
