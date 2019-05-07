@@ -1,6 +1,4 @@
-﻿using JetBrains.Annotations;
-
-namespace ErikTheCoder.Encryptor
+﻿namespace ErikTheCoder.Encryptor
 {
     public class EncryptedFileHeader
     {
