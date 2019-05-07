@@ -2,7 +2,7 @@
   "profiles": {
     "Encryptor": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\Users\\emadsen\\OneDrive - Global Imaging Systems, Inc\\Documents\\Temp\\Test.pdf\" -o encrypt -c aescng -kd rfc2898 -kl 32 -kdi 10000 -sl 16"
+      "commandLineArgs": "-i \"C:\\Users\\Erik\\Documents\\Chess\\Utilities\\Ordo\\ComputerGamesBullet.pgn\" -o encrypt -c aescng -kd rfc2898 -kl 32 -kdi 10000 -sl 16"
     }
   }
 }
