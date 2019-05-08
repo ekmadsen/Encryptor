@@ -112,7 +112,6 @@ namespace ErikTheCoder.Encryptor
             // Get password from user.
             // TODO: Hide password.
             // TODO: Confirm password.
-            SafeConsole.WriteLine();
             SafeConsole.Write("Enter password: ", ConsoleColor.Yellow);
             string password = SafeConsole.ReadLine();
             SafeConsole.WriteLine();
