@@ -219,7 +219,7 @@ namespace ErikTheCoder.Encryptor
                 if (encryptedFileHeader.CipherAlgorithm is null) throw new ArgumentException("Specify a cipher via -c argument.");
                 if (encryptedFileHeader.KeyDerivationAlgorithm is null) throw new ArgumentException("Specify a key derivation algorithm via -kd argument.");
                 if (encryptedFileHeader.KeyDerivationIterations <= 0) throw new ArgumentException("Specify key derivation iterations via -kdi argument");
-                if (encryptedFileHeader.KeyLength == 0) throw new ArgumentException("Specify a key length in bytes via -kl argument.");
+                if (encryptedFileHeader.KeyLength <= 0) throw new ArgumentException("Specify a key length in bytes via -kl argument.");
                 if (encryptedFileHeader.Salt.Length <= 0) throw new ArgumentException("Specify a salt length via -sl argument.");
             }
             return encryptedFileHeader;
