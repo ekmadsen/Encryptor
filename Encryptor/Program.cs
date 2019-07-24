@@ -208,6 +208,8 @@ namespace ErikTheCoder.Encryptor
                     case "/saltlength":
                         if (int.TryParse(argumentValue, out int saltLength)) encryptedFileHeader.Salt = new byte[saltLength];
                         break;
+                    default:
+                        throw new ArgumentException($"{argumentName} not supported.");
                 }
             }
             // Validate arguments.
