@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Encryptor": {
-      "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\Users\\emadsen\\OneDrive - Global Imaging Systems, Inc\\Documents\\Temp\\Test.encrypted\" -o decrypt"
-    }
-  }
-}

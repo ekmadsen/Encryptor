@@ -5,7 +5,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using ErikTheCoder.Logging;
 using ErikTheCoder.Utilities;
 using Newtonsoft.Json;
 
@@ -35,8 +34,9 @@ namespace ErikTheCoder.Encryptor
         private static async Task RunAsync(IReadOnlyList<string> Arguments)
         {
             _stopwatch = Stopwatch.StartNew();
-            EncryptedFileHeader encryptedFileHeader = ParseCommandLine(Arguments);
+            var encryptedFileHeader = ParseCommandLine(Arguments);
             ThreadsafeConsole.WriteLine();
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (encryptedFileHeader.Operation)
             {
                 case Operation.Encrypt:
@@ -55,30 +55,29 @@ namespace ErikTheCoder.Encryptor
         private static async Task EncryptAsync(EncryptedFileHeader EncryptedFileHeader)
         {
             const string encryptedFileExtension = ".encrypted";
-            bool inputPathIsFile = File.Exists(EncryptedFileHeader.Filename);
+            var inputPathIsFile = File.Exists(EncryptedFileHeader.Filename);
             if (!inputPathIsFile && !Directory.Exists(EncryptedFileHeader.Filename)) throw new Exception($"{EncryptedFileHeader.Filename} input path does not exist.");
             ThreadsafeConsole.WriteLine(inputPathIsFile ? "InputPath is a file." : "InputPath is a directory.");
             // TODO: Support encrypting entire directories using System.IO.Compression.ZipFile class.
             if (!inputPathIsFile) throw new NotSupportedException("Encrypting directories is not supported.");
             // Get password from user.
-            // TODO: Hide password.
-            // TODO: Confirm password.
+            // TODO: Hide and confirm password.
             ThreadsafeConsole.WriteLine();
             ThreadsafeConsole.Write("Enter password: ", ConsoleColor.Yellow);
-            string password = ThreadsafeConsole.ReadLine();
+            var password = ThreadsafeConsole.ReadLine();
             ThreadsafeConsole.WriteLine();
-            string outputFilename = Path.ChangeExtension(EncryptedFileHeader.Filename, encryptedFileExtension);
+            var outputFilename = Path.ChangeExtension(EncryptedFileHeader.Filename, encryptedFileExtension);
             ThreadsafeConsole.WriteLine($"Output filename is {outputFilename}.");
-            TimeSpan encryptionStart = _stopwatch.Elapsed;
-            using (FileStream inputFileStream = File.Open(EncryptedFileHeader.Filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (FileStream outputFileStream = File.Open(outputFilename, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            var encryptionStart = _stopwatch.Elapsed;
+            await using (var inputFileStream = File.Open(EncryptedFileHeader.Filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+            await using (var outputFileStream = File.Open(outputFilename, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
                 // Generate key from password and random salt.
-                using (RNGCryptoServiceProvider random = new RNGCryptoServiceProvider()) { random.GetBytes(EncryptedFileHeader.Salt); }
-                using (DeriveBytes keyDerivation = KeyDerivation.Create(EncryptedFileHeader.KeyDerivationAlgorithm, password, EncryptedFileHeader.Salt, EncryptedFileHeader.KeyDerivationIterations))
-                using (SymmetricAlgorithm cipher = Cipher.Create(EncryptedFileHeader.CipherAlgorithm))
+                using (var random = new RNGCryptoServiceProvider()) { random.GetBytes(EncryptedFileHeader.Salt); }
+                using (var keyDerivation = KeyDerivation.Create(EncryptedFileHeader.KeyDerivationAlgorithm, password, EncryptedFileHeader.Salt, EncryptedFileHeader.KeyDerivationIterations))
+                using (var cipher = Cipher.Create(EncryptedFileHeader.CipherAlgorithm))
                 {
-                    byte[] key = keyDerivation.GetBytes(EncryptedFileHeader.KeyLength);
+                    var key = keyDerivation.GetBytes(EncryptedFileHeader.KeyLength);
                     ThreadsafeConsole.WriteLine($"Encryption key (derived from password and a random salt) is {Convert.ToBase64String(key)}.");
                     // Create cipher and generate initialization vector.
                     // Generate a new initialization vector for each encryption to prevent identical plaintexts from producing identical ciphertexts when encrypted using the same key.
@@ -87,13 +86,13 @@ namespace ErikTheCoder.Encryptor
                     cipher.IV.CopyTo(EncryptedFileHeader.InitializationVector, 0);
                     ThreadsafeConsole.WriteLine($"Cipher initialization vector is {Convert.ToBase64String(EncryptedFileHeader.InitializationVector)}.");
                     // Write integer length of encrypted file header followed by the the header bytes.
-                    byte[] fileHeaderBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(EncryptedFileHeader));
+                    var fileHeaderBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(EncryptedFileHeader));
                     await outputFileStream.WriteAsync(BitConverter.GetBytes(fileHeaderBytes.Length));
                     await outputFileStream.WriteAsync(fileHeaderBytes);
                     // Create encrypting output stream.
-                    byte[] buffer = new byte[cipher.BlockSize];
-                    using (ICryptoTransform encryptor = cipher.CreateEncryptor(key, EncryptedFileHeader.InitializationVector))
-                    using (CryptoStream cryptoStream = new CryptoStream(outputFileStream, encryptor, CryptoStreamMode.Write))
+                    var buffer = new byte[cipher.BlockSize];
+                    using (var encryptor = cipher.CreateEncryptor(key, EncryptedFileHeader.InitializationVector))
+                    await using (var cryptoStream = new CryptoStream(outputFileStream, encryptor, CryptoStreamMode.Write))
                     {
                         // To limit memory usage, repeatedly read a small block from input stream and write it to the encrypted output stream.
                         int bytesRead;
@@ -101,7 +100,7 @@ namespace ErikTheCoder.Encryptor
                     }
                 }
             }
-            TimeSpan encryptionDuration = _stopwatch.Elapsed - encryptionStart;
+            var encryptionDuration = _stopwatch.Elapsed - encryptionStart;
             ThreadsafeConsole.WriteLine($"Wrote encrypted file to {outputFilename}.");
             ThreadsafeConsole.WriteLine($"Encryption took {encryptionDuration.TotalSeconds.ToString(_elapsedSecondsFormat)} seconds.");
         }
@@ -110,45 +109,44 @@ namespace ErikTheCoder.Encryptor
         private static async Task DecryptAsync(string InputPath)
         {
             // Get password from user.
-            // TODO: Hide password.
-            // TODO: Confirm password.
+            // TODO: Hide and confirm password.
             ThreadsafeConsole.Write("Enter password: ", ConsoleColor.Yellow);
-            string password = ThreadsafeConsole.ReadLine();
+            var password = ThreadsafeConsole.ReadLine();
             ThreadsafeConsole.WriteLine();
             string outputFilename;
-            TimeSpan encryptionStart = _stopwatch.Elapsed;
-            using (FileStream inputFileStream = File.Open(InputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            var encryptionStart = _stopwatch.Elapsed;
+            await using (var inputFileStream = File.Open(InputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 // Read integer length of encrypted file header followed by header bytes.
-                byte[] headerLengthBytes = new byte[sizeof(int)];
+                var headerLengthBytes = new byte[sizeof(int)];
                 await inputFileStream.ReadAsync(headerLengthBytes, 0, headerLengthBytes.Length);
-                int headerLength = BitConverter.ToInt32(headerLengthBytes);
-                byte[] headerBytes = new byte[headerLength];
+                var headerLength = BitConverter.ToInt32(headerLengthBytes);
+                var headerBytes = new byte[headerLength];
                 await inputFileStream.ReadAsync(headerBytes, 0, headerBytes.Length);
-                EncryptedFileHeader encryptedFileHeader = JsonConvert.DeserializeObject<EncryptedFileHeader>(Encoding.UTF8.GetString(headerBytes));
-                outputFilename = Path.Combine(Path.GetDirectoryName(InputPath), encryptedFileHeader.Filename);
+                var encryptedFileHeader = JsonConvert.DeserializeObject<EncryptedFileHeader>(Encoding.UTF8.GetString(headerBytes));
+                outputFilename = Path.Combine(Path.GetDirectoryName(InputPath) ?? string.Empty, encryptedFileHeader.Filename);
                 ThreadsafeConsole.WriteLine($"Output filename is {outputFilename}.");
                 // Generate key from password (provided by user) and salt (stored in encrypted file).
-                using (DeriveBytes keyDerivation = KeyDerivation.Create(encryptedFileHeader.KeyDerivationAlgorithm, password, encryptedFileHeader.Salt, encryptedFileHeader.KeyDerivationIterations))
+                using (var keyDerivation = KeyDerivation.Create(encryptedFileHeader.KeyDerivationAlgorithm, password, encryptedFileHeader.Salt, encryptedFileHeader.KeyDerivationIterations))
                 {
-                    byte[] key = keyDerivation.GetBytes(encryptedFileHeader.KeyLength);
+                    var key = keyDerivation.GetBytes(encryptedFileHeader.KeyLength);
                     ThreadsafeConsole.WriteLine($"Encryption key (derived from password and salt) is {Convert.ToBase64String(key)}.");
                     ThreadsafeConsole.WriteLine($"Cipher initialization vector is {Convert.ToBase64String(encryptedFileHeader.InitializationVector)}.");
                     // Create cipher from key (see above) plus algorithm name and initialization vector (stored in unencrypted header at beginning of encrypted file).
                     // Create decrypting input stream.
-                    using (SymmetricAlgorithm cipher = Cipher.Create(encryptedFileHeader.CipherAlgorithm))
-                    using (ICryptoTransform decryptor = cipher.CreateDecryptor(key, encryptedFileHeader.InitializationVector))
-                    using (CryptoStream cryptoStream = new CryptoStream(inputFileStream, decryptor, CryptoStreamMode.Read))
-                    using (FileStream outputFileStream = File.Open(outputFilename, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    using (var cipher = Cipher.Create(encryptedFileHeader.CipherAlgorithm))
+                    using (var decryptor = cipher.CreateDecryptor(key, encryptedFileHeader.InitializationVector))
+                    await using (var cryptoStream = new CryptoStream(inputFileStream, decryptor, CryptoStreamMode.Read))
+                    await using (var outputFileStream = File.Open(outputFilename, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                     {
                         // To limit memory usage, repeatedly read a small block from input stream and write it to the decrypted output stream.
-                        byte[] buffer = new byte[cipher.BlockSize];
+                        var buffer = new byte[cipher.BlockSize];
                         int bytesRead;
                         while ((bytesRead = await cryptoStream.ReadAsync(buffer, 0, buffer.Length)) > 0) await outputFileStream.WriteAsync(buffer, 0, bytesRead);
                     }
                 }
             }
-            TimeSpan encryptionDuration = _stopwatch.Elapsed - encryptionStart;
+            var encryptionDuration = _stopwatch.Elapsed - encryptionStart;
             ThreadsafeConsole.WriteLine($"Wrote decrypted file to {outputFilename}.");
             ThreadsafeConsole.WriteLine($"Decryption took {encryptionDuration.TotalSeconds.ToString(_elapsedSecondsFormat)} seconds.");
         }
@@ -158,12 +156,12 @@ namespace ErikTheCoder.Encryptor
         private static EncryptedFileHeader ParseCommandLine(IReadOnlyList<string> Arguments)
         {
             if (Arguments.Count % 2 != 0) throw new ArgumentException("Invalid number of arguments.  Arguments must be passed in a pair: -argumentName argumentValue or /argumentName argumentValue.");
-            EncryptedFileHeader encryptedFileHeader = new EncryptedFileHeader();
-            for (int index = 0; index < Arguments.Count; index++)
+            var encryptedFileHeader = new EncryptedFileHeader();
+            for (var index = 0; index < Arguments.Count; index++)
             {
-                string argumentName = Arguments[index];
+                var argumentName = Arguments[index];
                 index++;
-                string argumentValue = Arguments[index];
+                var argumentValue = Arguments[index];
                 switch (argumentName?.ToLower())
                 {
                     case "-i":
@@ -194,19 +192,19 @@ namespace ErikTheCoder.Encryptor
                     case "/kdi":
                     case "-kditerations":
                     case "/kditerations":
-                        if (int.TryParse(argumentValue, out int keyDerivationIterations)) encryptedFileHeader.KeyDerivationIterations = keyDerivationIterations;
+                        if (int.TryParse(argumentValue, out var keyDerivationIterations)) encryptedFileHeader.KeyDerivationIterations = keyDerivationIterations;
                         break;
                     case "-kl":
                     case "/kl":
                     case "-keylength":
                     case "/keylength":
-                        if (int.TryParse(argumentValue, out int keyLength)) encryptedFileHeader.KeyLength = keyLength;
+                        if (int.TryParse(argumentValue, out var keyLength)) encryptedFileHeader.KeyLength = keyLength;
                         break;
                     case "-sl":
                     case "/sl":
                     case "-saltlength":
                     case "/saltlength":
-                        if (int.TryParse(argumentValue, out int saltLength)) encryptedFileHeader.Salt = new byte[saltLength];
+                        if (int.TryParse(argumentValue, out var saltLength)) encryptedFileHeader.Salt = new byte[saltLength];
                         break;
                     default:
                         throw new ArgumentException($"{argumentName} not supported.");
@@ -215,6 +213,7 @@ namespace ErikTheCoder.Encryptor
             // Validate arguments.
             if (string.IsNullOrEmpty(encryptedFileHeader.Filename)) throw new ArgumentException("Specify an input path via -i argument.");
             // ReSharper disable once ConvertIfStatementToSwitchStatement
+            // ReSharper disable once ConvertIfStatementToSwitchExpression
             if (encryptedFileHeader.Operation == Operation.Unknown) throw new ArgumentException("Specify an operation via -o argument.");
             if (encryptedFileHeader.Operation == Operation.Encrypt)
             {
