@@ -211,7 +211,7 @@ namespace ErikTheCoder.Encryptor
                 }
             }
             // Validate arguments.
-            if (string.IsNullOrEmpty(encryptedFileHeader.Filename)) throw new ArgumentException("Specify an input path via -i argument.");
+            if (encryptedFileHeader.Filename.IsNullOrEmpty()) throw new ArgumentException("Specify an input path via -i argument.");
             // ReSharper disable once ConvertIfStatementToSwitchStatement
             // ReSharper disable once ConvertIfStatementToSwitchExpression
             if (encryptedFileHeader.Operation == Operation.Unknown) throw new ArgumentException("Specify an operation via -o argument.");
