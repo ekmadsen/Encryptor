@@ -8,15 +8,12 @@ namespace ErikTheCoder.Encryptor
     {
         public static DeriveBytes Create(string Name, string Password, byte[] Salt, int Iterations)
         {
-            switch (Name?.ToLower())
+            return Name?.ToLower() switch
             {
-                case "pdb":
-                    return new PasswordDeriveBytes(Password, Salt) {IterationCount = Iterations};
-                case "rfc2898":
-                    return new Rfc2898DeriveBytes(Password, Salt, Iterations);
-                default:
-                    throw new ArgumentException($"{Name} key derivation not supported.");
-            }
+                "pdb" => new PasswordDeriveBytes(Password, Salt) {IterationCount = Iterations},
+                "rfc2898" => new Rfc2898DeriveBytes(Password, Salt, Iterations),
+                _ => throw new ArgumentException($"{Name} key derivation not supported.")
+            };
         }
     }
 }

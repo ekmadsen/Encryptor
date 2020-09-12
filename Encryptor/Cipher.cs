@@ -8,21 +8,15 @@ namespace ErikTheCoder.Encryptor
     {
         public static SymmetricAlgorithm Create(string Name)
         {
-            switch (Name?.ToLower())
+            return Name?.ToLower() switch
             {
-                case "aescsp":
-                    return new AesCryptoServiceProvider();
-                case "aesmanaged":
-                    return new AesManaged();
-                case "aescng":
-                    return new AesCng();
-                case "tdescsp":
-                    return new TripleDESCryptoServiceProvider();
-                case "tdescng":
-                    return new TripleDESCng();
-                default:
-                    throw new ArgumentException($"{Name} cipher not supported.");
-            }
+                "aescsp" => new AesCryptoServiceProvider(),
+                "aesmanaged" => new AesManaged(),
+                "aescng" => new AesCng(),
+                "tdescsp" => new TripleDESCryptoServiceProvider(),
+                "tdescng" => new TripleDESCng(),
+                _ => throw new ArgumentException($"{Name} cipher not supported.")
+            };
         }
     }
 }
